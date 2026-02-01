@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>차량 부제 안내</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React 및 Babel Standalone 로드 -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Firebase Compat 버전 -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
+        body { font-family: 'Pretendard', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .animate-spin-custom { animation: spin 1s linear infinite; }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <div id="root"></div>
+
+    <script type="text/babel" data-presets="react">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- SVG 아이콘 컴포넌트 ---
+        const Icon = ({ name, size = 16, className = "" }) => {
+            const icons = {
+                ChevronLeft: <path d="m15 18-6-6 6-6"/>,
+                ChevronRight: <path d="m9 18 6-6-6-6"/>,
+                Settings: (
+                    <React.Fragment>
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </React.Fragment>
+                ),
+                Plus: <path d="M5 12h14m-7-7v14"/>,
+                Trash2: (
+                    <React.Fragment>
+                        <path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2m-6 9v4m4-4v4"/>
+                    </React.Fragment>
+                ),
+                Lock: (
+                    <React.Fragment>
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                    </React.Fragment>
+                ),
+                LogOut: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9"/>,
+                Car: (
+                    <React.Fragment>
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9C2.1 10.9 2 11.1 2 11.4V16c0 .6.4 1 1 1h2"/>
+                        <circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>
+                    </React.Fragment>
+                ),
+                Info: (
+                    <React.Fragment>
+                        <circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/>
+                    </React.Fragment>
+                ),
+                Loader: <path d="M21 12a9 9 0 1 1-6.219-8.56"/>,
+                AlertCircle: (
+                    <React.Fragment>
+                        <circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>
+                    </React.Fragment>
+                ),
+                Bell: (
+                    <React.Fragment>
+                        <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+                    </React.Fragment>
+                ),
+                List: <path d="M3 12h.01M3 18h.01M3 6h.01M8 12h13M8 18h13M8 6h13"/>,
+                Edit: <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>,
+                X: <path d="M18 6 6 18M6 6l12 12"/>,
+                Check: <path d="M20 6 9 17l-5-5"/>
+            };
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name]}
+                </svg>
+            );
+        };
+
+        // --- Firebase 환경 설정 ---
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "", authDomain: "", projectId: "", storageBucket: "", messagingSenderId: "", appId: ""
+        };
+
+        const hasFirebaseConfig = !!firebaseConfig.apiKey;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'parking-rotation-manager';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // 관리자 비밀번호: admin00
+        const ADMIN_PASSWORD = "admin00";
+
+        if (hasFirebaseConfig) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const NATIONAL_HOLIDAYS_2026 = {
+            "2026-01-01": "신정", "2026-02-16": "설날 연휴", "2026-02-17": "설날", "2026-02-18": "설날 연휴",
+            "2026-03-01": "삼일절", "2026-03-02": "대체공휴일", "2026-05-05": "어린이날", "2026-05-24": "부처님오신날",
+            "2026-05-25": "대체공휴일", "2026-06-06": "현충일", "2026-08-15": "광복절", "2026-08-17": "대체공휴일",
+            "2026-09-24": "추석 연휴", "2026-09-25": "추석", "2026-09-26": "추석 연휴", "2026-10-03": "개천절",
+            "2026-10-05": "대체공휴일", "2026-10-09": "한글날", "2026-12-25": "성탄절"
+        };
+
+        const INITIAL_NOTICE_TEXT = `- 본사 프리패스 등록 되어있는 차량은 롯데마트 주차 금지 (주차 시, 요금 발생)\n- 입차 가능 시간 06:45분 / 출차 가능 시간 21:45분\n- 사내 주차 시, 先 주차 차량 기준으로 1열이 됨\n- 5층이 아닌 타 층 주차 적발 시 경고 없이 롯데마트 주차 불가\n- 대중 교통비 수령자는 사내 및 롯데마트에 주차 불가\n- 롯데마트 휴무일(2,4주차 월요일)은 입/출차 시간이 기존과 상이함으로 롯데마트 공지 확인`;
+
+        const App = () => {
+            const [user, setUser] = useState(null);
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [currentView, setCurrentView] = useState('schedule');
+            const [currentDate, setCurrentDate] = useState(new Date()); // 현재 월 기준 디폴트
+            const [userHolidays, setUserHolidays] = useState([]);
+            const [noticeContent, setNoticeContent] = useState(INITIAL_NOTICE_TEXT);
+            const [loading, setLoading] = useState(hasFirebaseConfig);
+            const [showLoginModal, setShowLoginModal] = useState(false);
+            const [passwordInput, setPasswordInput] = useState('');
+            
+            const [formDate, setFormDate] = useState('');
+            const [formLabel, setFormLabel] = useState('');
+            const [tempNoticeText, setTempNoticeText] = useState('');
+            const [isEditingNotice, setIsEditingNotice] = useState(false);
+            const [isDeletingNotice, setIsDeletingNotice] = useState(false);
+
+            const baseReferenceDate = new Date(2026, 0, 5);
+            const baseStartDigit = 9;
+
+            const getYear = currentDate.getFullYear();
+            const getMonth = currentDate.getMonth();
+
+            const exitAdminMode = () => {
+                setCurrentView('schedule');
+                setIsAdmin(false);
+                setIsEditingNotice(false);
+                setIsDeletingNotice(false);
+            };
+
+            const cancelEditing = () => {
+                setTempNoticeText('');
+                setIsEditingNotice(false);
+            };
+
+            const handleEditNotice = () => {
+                setTempNoticeText(noticeContent);
+                setIsEditingNotice(true);
+                setIsDeletingNotice(false);
+            };
+
+            useEffect(() => {
+                if (!hasFirebaseConfig) { setLoading(false); return; }
+                const initAuth = async () => {
+                    try {
+                        if (initialAuthToken) await firebase.auth().signInWithCustomToken(initialAuthToken);
+                        else await firebase.auth().signInAnonymously();
+                    } catch (error) { console.error("Auth error:", error); setLoading(false); }
+                };
+                initAuth();
+                return firebase.auth().onAuthStateChanged(setUser);
+            }, []);
+
+            useEffect(() => {
+                if (!user) return;
+                const db = firebase.firestore();
+                const unsubHolidays = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('holidays')
+                    .onSnapshot((snap) => {
+                        setUserHolidays(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+                        setLoading(false);
+                    }, (err) => { console.error("Holidays sync error:", err); });
+
+                const unsubNotice = db.collection('artifacts').doc(appId).collection('public').doc('data').collection('notice_content').doc('main')
+                    .onSnapshot((doc) => {
+                        if (doc.exists) setNoticeContent(doc.data().text);
+                    }, (err) => { console.error("Notice sync error:", err); });
+
+                return () => { unsubHolidays(); unsubNotice(); };
+            }, [user]);
+
+            useEffect(() => {
+                const y = getYear;
+                const m = String(getMonth + 1).padStart(2, '0');
+                setFormDate(`${y}-${m}-01`);
+            }, [getYear, getMonth]);
+
+            const formatDateString = (date) => {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            };
+
+            const isWeekend = (date) => date.getDay() === 0 || date.getDay() === 6;
+
+            const getHolidayInfo = (date) => {
+                const formatted = formatDateString(date);
+                if (getYear === 2026 && NATIONAL_HOLIDAYS_2026[formatted]) return { label: NATIONAL_HOLIDAYS_2026[formatted], type: 'national' };
+                const userH = userHolidays.find(h => h.date === formatted);
+                return userH ? { label: userH.label, type: 'user' } : null;
+            };
+
+            const scheduleData = useMemo(() => {
+                const daysInMonth = new Date(getYear, getMonth + 1, 0).getDate();
+                const result = [];
+                const getStep = (target) => {
+                    let step = 0; let curr = new Date(baseReferenceDate);
+                    if (target >= baseReferenceDate) {
+                        while (formatDateString(curr) !== formatDateString(target)) {
+                            if (!isWeekend(curr) && !getHolidayInfo(curr)) step++;
+                            curr.setDate(curr.getDate() + 1);
+                        }
+                    } else {
+                        while (formatDateString(curr) !== formatDateString(target)) {
+                            curr.setDate(curr.getDate() - 1);
+                            if (!isWeekend(curr) && !getHolidayInfo(curr)) step--;
+                        }
+                    }
+                    return step;
+                };
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const date = new Date(getYear, getMonth, d);
+                    const h = getHolidayInfo(date);
+                    if (isWeekend(date)) result.push({ date, type: 'weekend' });
+                    else if (h) result.push({ date, type: 'holiday', label: h.label, holidayType: h.type });
+                    else {
+                        const s = ((baseStartDigit + getStep(date)) % 10 + 10) % 10;
+                        result.push({ 
+                            date, type: 'work', 
+                            main: [s, (s+1)%10, (s+2)%10, (s+3)%10], 
+                            lotte: [(s+4)%10, (s+5)%10, (s+6)%10, (s+7)%10, (s+8)%10, (s+9)%10] 
+                        });
+                    }
+                }
+                return result;
+            }, [getYear, getMonth, userHolidays]);
+
+            const allHolidaysList = useMemo(() => {
+                const nat = getYear === 2026 ? Object.entries(NATIONAL_HOLIDAYS_2026).map(([d, l]) => ({ id: `n-${d}`, date: d, label: l, isNational: true })) : [];
+                const usr = userHolidays.map(h => ({ ...h, isNational: false }));
+                return [...nat, ...usr].sort((a, b) => new Date(a.date) - new Date(b.date));
+            }, [getYear, userHolidays]);
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (passwordInput === ADMIN_PASSWORD) { setIsAdmin(true); setShowLoginModal(false); setPasswordInput(''); setCurrentView('admin'); }
+                else alert("비밀번호가 틀렸습니다.");
+            };
+
+            const addHoliday = async (e) => {
+                e.preventDefault();
+                if (!isAdmin || !user || !formDate || !formLabel) return;
+                const db = firebase.firestore();
+                try {
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('holidays').doc(formDate).set({ date: formDate, label: formLabel });
+                    setFormLabel('');
+                } catch (err) { console.error("저장 실패:", err); }
+            };
+
+            const deleteHoliday = async (dateId) => {
+                if (!isAdmin || !user) return;
+                const db = firebase.firestore();
+                try {
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('holidays').doc(dateId).delete();
+                } catch (err) { console.error("삭제 실패:", err); }
+            };
+
+            const saveNoticeContent = async () => {
+                if (!isAdmin || !user) return;
+                const db = firebase.firestore();
+                try {
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('notice_content').doc('main').set({
+                        text: tempNoticeText,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    setNoticeContent(tempNoticeText);
+                    setIsEditingNotice(false);
+                } catch (err) { console.error("공지 저장 실패:", err); }
+            };
+
+            const confirmDeleteNoticeAll = async () => {
+                const db = firebase.firestore();
+                try {
+                    await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('notice_content').doc('main').set({ text: "", updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    setNoticeContent(""); setIsDeletingNotice(false); setIsEditingNotice(false);
+                } catch (err) { console.error("초기화 실패:", err); }
+            };
+
+            if (loading) return <div className="flex h-screen items-center justify-center bg-white"><Icon name="Loader" size={40} className="animate-spin-custom text-blue-600" /></div>;
+
+            return (
+                <div className="min-h-screen bg-slate-50 flex flex-col items-center text-center">
+                    <nav className="fixed top-0 inset-x-0 h-10 bg-white border-b flex items-center justify-between px-4 z-40 shadow-sm">
+                        <div className="flex items-center gap-1.5 cursor-pointer font-black text-sm" onClick={exitAdminMode}>
+                            <div className="bg-blue-600 p-0.5 rounded text-white"><Icon name="Car" size={14}/></div> 차량 부제 안내
+                        </div>
+                        <div className="flex gap-2">
+                            <button onClick={exitAdminMode} className={`px-3 py-1 text-[11px] font-bold rounded ${currentView==='schedule'?'bg-blue-50 text-blue-600':'text-slate-500'}`}>부제 일정</button>
+                            {isAdmin ? 
+                                <button onClick={() => setCurrentView('admin')} className={`px-3 py-1 text-[11px] font-bold rounded flex items-center gap-1 ${currentView==='admin'?'bg-indigo-50 text-indigo-600':'text-slate-500'}`}><Icon name="Settings" size={12}/> 관리자</button> :
+                                <button onClick={() => setShowLoginModal(true)} className="px-3 py-1 bg-slate-900 text-white rounded text-[11px] font-bold">관리자</button>
+                            }
+                        </div>
+                    </nav>
+
+                    <main className="pt-14 pb-8 px-4 w-full max-w-5xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-black">{currentView === 'admin' ? '관리자 센터' : '차량 부제 안내'}</h2>
+                            <div className="flex items-center bg-white border rounded-lg p-1 scale-90 shadow-sm">
+                                <button onClick={() => setCurrentDate(new Date(getYear, getMonth-1, 1))} className="p-1 hover:bg-slate-50 rounded transition-all"><Icon name="ChevronLeft" size={16}/></button>
+                                <span className="px-3 font-black text-sm">{getYear}년 {getMonth+1}월</span>
+                                <button onClick={() => setCurrentDate(new Date(getYear, getMonth+1, 1))} className="p-1 hover:bg-slate-50 rounded transition-all"><Icon name="ChevronRight" size={16}/></button>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                            <div className="lg:col-span-8">
+                                <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
+                                    <table className="w-full border-collapse table-fixed text-center">
+                                        <thead>
+                                            <tr className="bg-[#002b5b] text-white text-sm font-bold text-center">
+                                                <th className="py-2.5 w-24 text-center">날짜</th>
+                                                <th className="py-2.5 border-x border-white/20 text-center">본사 주차</th>
+                                                <th className="py-2.5 text-center">롯데마트 주차</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y text-sm font-medium">
+                                            {scheduleData.map((day, idx) => {
+                                                if (day.type === 'weekend') return null;
+                                                const dStr = `${day.date.getMonth()+1}/${day.date.getDate()}`;
+                                                const dLbl = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'][day.date.getDay()];
+                                                if (day.type === 'holiday') return (
+                                                    <tr key={idx} onClick={() => isAdmin && day.holidayType !== 'national' && deleteHoliday(formatDateString(day.date))} className={isAdmin && day.holidayType !== 'national' ? 'cursor-pointer hover:bg-slate-50' : ''}>
+                                                        <td className="py-2 px-2 bg-slate-50/50 border-r text-center">
+                                                            <div className="font-bold text-slate-900">{dStr}</div>
+                                                            <div className="text-xs text-black font-bold mt-0.5">{dLbl}</div>
+                                                        </td>
+                                                        <td colSpan="2" className={`py-2 font-black tracking-widest text-white text-center ${day.holidayType==='national'?'bg-red-500':'bg-slate-900'}`}>{day.label}</td>
+                                                    </tr>
+                                                );
+                                                return (
+                                                    <tr key={idx} className={isAdmin?'cursor-pointer hover:bg-slate-50 text-center':''}>
+                                                        <td className="py-2 px-2 border-r text-center">
+                                                            <div className="font-bold text-slate-900">{dStr}</div>
+                                                            <div className="text-xs text-black font-bold mt-0.5">{dLbl}</div>
+                                                        </td>
+                                                        <td className="py-2 border-r text-center"><div className="flex justify-center gap-1">{day.main.map(n => <span key={n} className="w-7 h-7 flex items-center justify-center bg-white border rounded-md font-black text-lg shadow-sm text-slate-800">{n}</span>)}</div></td>
+                                                        <td className="py-2 text-center"><div className="flex justify-center gap-1 flex-wrap">{day.lotte.map(n => <span key={n} className="w-7 h-7 flex items-center justify-center bg-blue-600 text-white rounded-md font-black text-lg shadow-sm">{n}</span>)}</div></td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                {currentView === 'admin' && isAdmin && (
+                                    <div className="mt-8 space-y-6 animate-in slide-in-from-bottom-2 duration-300">
+                                        <div className="bg-slate-900 rounded-xl p-4 text-white shadow-xl">
+                                            <h4 className="text-xs font-black mb-3 flex items-center gap-1 justify-center"><Icon name="Plus" size={12}/> 휴일 추가</h4>
+                                            <form onSubmit={addHoliday} className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">날짜</label>
+                                                    <input type="date" value={formDate} onChange={e=>setFormDate(e.target.value)} className="w-full bg-white text-slate-900 p-2 rounded text-xs font-bold outline-none border-none shadow-sm text-center" />
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <label className="text-[9px] font-bold text-slate-400 uppercase">명칭</label>
+                                                    <input type="text" placeholder="예: 권장연차" value={formLabel} onChange={e=>setFormLabel(e.target.value)} className="w-full bg-white text-slate-900 p-2 rounded text-xs font-bold outline-none border-none shadow-sm text-center" />
+                                                </div>
+                                                <button className="col-span-2 py-2 bg-blue-600 hover:bg-blue-700 rounded font-black text-xs transition-colors">저장</button>
+                                            </form>
+                                        </div>
+                                        <div className="bg-white rounded-xl p-4 border shadow-sm">
+                                            <h4 className="text-xs font-black mb-2 text-slate-900 flex items-center gap-1 justify-center"><Icon name="List" size={12}/> 등록된 휴일 목록 ({allHolidaysList.length})</h4>
+                                            <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                                                {allHolidaysList.map(h => (
+                                                    <div key={h.id} className={`flex items-center justify-between p-2 rounded text-[10px] ${h.isNational ? 'bg-slate-100 text-slate-500' : 'bg-slate-50'}`}>
+                                                        <span className="font-bold">{h.date.slice(5).replace('-', '/')} {h.label}</span>
+                                                        {!h.isNational && <button onClick={()=>deleteHoliday(h.date)} className="text-red-400 hover:text-red-600 p-1 transition-colors"><Icon name="Trash2" size={14}/></button>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="lg:col-span-4 space-y-4">
+                                <div className="bg-white rounded-xl shadow-md border-t-4 border-blue-600 p-5 overflow-hidden">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2 text-blue-700">
+                                            <Icon name="Bell" size={18} />
+                                            <h3 className="font-black text-base">필독 공지사항</h3>
+                                        </div>
+                                        {isAdmin && (
+                                            <div className="flex gap-2 items-center">
+                                                {!isEditingNotice ? (
+                                                    <button onClick={handleEditNotice} className="text-blue-500 hover:bg-blue-50 p-1 rounded-full transition-colors" title="공지 전체 수정"><Icon name="Edit" size={18} /></button>
+                                                ) : (
+                                                    <div className="flex gap-1 animate-in zoom-in-95"><button onClick={saveNoticeContent} className="text-green-600 hover:bg-green-50 p-1 rounded-full transition-colors"><Icon name="Check" size={18} /></button><button onClick={cancelEditing} className="text-red-500 hover:bg-red-50 p-1 rounded-full transition-colors"><Icon name="X" size={18} /></button></div>
+                                                )}
+                                                {!isDeletingNotice ? (
+                                                    <button onClick={() => setIsDeletingNotice(true)} className="text-slate-300 hover:text-red-500 p-1 rounded-full transition-colors" title="공지 전체 삭제"><Icon name="Trash2" size={18} /></button>
+                                                ) : (
+                                                    <div className="flex gap-1 items-center bg-red-50 p-0.5 rounded-lg border border-red-100 animate-in zoom-in-95"><button onClick={confirmDeleteNoticeAll} className="bg-red-600 text-white text-[9px] font-black px-2 py-1 rounded">삭제확인</button><button onClick={() => setIsDeletingNotice(false)} className="text-slate-400 p-1"><Icon name="X" size={14}/></button></div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {isEditingNotice && isAdmin ? (
+                                        <div className="animate-in fade-in duration-200">
+                                            <textarea autoFocus value={tempNoticeText} onChange={e=>setTempNoticeText(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3 rounded text-[11px] font-medium outline-none focus:border-blue-500 h-64 resize-none shadow-inner" />
+                                            <p className="text-[9px] text-slate-400 mt-2 italic leading-tight text-left">* 줄을 나누어 입력하면 자동으로 불렛 리스트로 표시됩니다.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4 text-[11px] font-medium leading-relaxed text-slate-700 text-left">
+                                            {noticeContent && noticeContent.trim() ? noticeContent.split('\n').map((line, i) => {
+                                                const cleanLine = line.trim().startsWith('-') || line.trim().startsWith('•') ? line.trim().substring(1).trim() : line.trim();
+                                                if (!cleanLine) return null;
+                                                return (
+                                                    <div key={i} className="flex gap-2"><span className="text-blue-500 font-black shrink-0">•</span><p>{cleanLine}</p></div>
+                                                );
+                                            }) : <div className="text-center py-10"><p className="text-slate-400 italic">게시된 공지사항이 없습니다.</p></div>}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 font-medium text-blue-800 text-[10px] leading-tight text-left">
+                                    <div className="flex gap-2"><Icon name="Info" size={14} className="shrink-0" /><p>본 일정표는 주말 및 공휴일을 제외하고 번호가 순차적으로 자동 배정됩니다.</p></div>
+                                </div>
+                            </div>
+                        </div>
+                    </main>
+
+                    {showLoginModal && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                            <div className="bg-white p-6 rounded-xl w-64 text-center shadow-2xl animate-in zoom-in-95">
+                                <div className="mb-4 flex justify-center text-blue-600"><Icon name="Lock" size={32} /></div>
+                                <h3 className="font-black mb-1">관리자 인증</h3>
+                                <p className="text-[10px] text-slate-400 mb-4 italic">허가된 관리자만 접근 가능합니다.</p>
+                                <form onSubmit={handleLogin} className="space-y-3">
+                                    <input type="password" placeholder="PIN" value={passwordInput} onChange={e=>setPasswordInput(e.target.value)} className="w-full p-2 bg-slate-100 rounded text-center font-black tracking-widest outline-none border-none focus:ring-2 focus:ring-blue-100 shadow-inner text-center" autoFocus />
+                                    <div className="flex gap-2"><button type="button" onClick={()=>setShowLoginModal(false)} className="flex-1 py-2 bg-slate-100 rounded text-[11px] font-bold hover:bg-slate-200">취소</button><button className="flex-1 py-2 bg-blue-600 text-white rounded text-[11px] font-bold shadow-md hover:bg-blue-700">확인</button></div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
