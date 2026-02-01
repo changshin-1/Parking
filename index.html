@@ -85,7 +85,6 @@
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'parking-rotation-manager';
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         
-        // 관리자 비밀번호
         const ADMIN_PASSWORD = "admin00";
 
         if (hasFirebaseConfig) {
@@ -143,7 +142,7 @@
                 setIsDeletingNotice(false);
             };
 
-            // Auth Priority
+            // RULE 3 - Auth Before Queries
             useEffect(() => {
                 if (!hasFirebaseConfig) { setLoading(false); return; }
                 const initAuth = async () => {
@@ -166,11 +165,11 @@
                 const unsubHolidays = holidayRef.onSnapshot((snap) => {
                     setUserHolidays(snap.docs.map(d => ({ id: d.id, ...d.data() })));
                     setLoading(false);
-                });
+                }, (err) => { console.error("Holidays sync error:", err); });
 
                 const unsubNotice = noticeRef.onSnapshot((doc) => {
                     if (doc.exists) setNoticeContent(doc.data().text);
-                });
+                }, (err) => { console.error("Notice sync error:", err); });
 
                 return () => { unsubHolidays(); unsubNotice(); };
             }, [user]);
@@ -249,6 +248,7 @@
                 if (!isAdmin || !user || !formDate || !formLabel) return;
                 const db = firebase.firestore();
                 try {
+                    // 휴일 데이터를 날짜를 ID로 하여 저장 (중복 방지 및 동기화)
                     await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('holidays').doc(formDate).set({
                         date: formDate,
                         label: formLabel
@@ -290,7 +290,7 @@
 
             return (
                 <div className="min-h-screen bg-slate-50 flex flex-col items-center">
-                    <nav className="fixed top-0 inset-x-0 h-10 bg-white border-b flex items-center justify-between px-4 z-40 shadow-sm">
+                    <nav className="fixed top-0 inset-x-0 h-10 bg-white border-b flex items-center justify-between px-4 z-40 shadow-sm text-center">
                         <div className="flex items-center gap-1.5 cursor-pointer font-black text-base" onClick={exitAdminMode}>
                             <div className="bg-blue-600 p-0.5 rounded text-white"><Icon name="Car" size={18}/></div> 차량 부제 안내
                         </div>
@@ -313,7 +313,7 @@
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start text-center">
                             <div className="lg:col-span-8">
                                 <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
                                     <table className="w-full border-collapse table-fixed text-center">
@@ -407,7 +407,7 @@
                                     {isEditingNotice && isAdmin ? (
                                         <div className="animate-in fade-in duration-200">
                                             <textarea autoFocus value={tempNoticeText} onChange={e=>setTempNoticeText(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3 rounded text-[13px] font-medium outline-none focus:border-blue-500 h-64 resize-none shadow-inner" />
-                                            <p className="text-[10px] text-slate-400 mt-2 italic leading-tight text-left">* 줄을 나누면 자동으로 리스트로 표시됩니다.</p>
+                                            <p className="text-[10px] text-slate-400 mt-2 italic leading-tight text-left">* 줄을 나누어 입력하면 자동으로 리스트로 표시됩니다.</p>
                                         </div>
                                     ) : (
                                         <div className="space-y-4 text-[13px] font-medium leading-relaxed text-slate-700 text-left">
@@ -430,7 +430,7 @@
 
                     {showLoginModal && (
                         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                            <div className="bg-white p-6 rounded-xl w-64 text-center shadow-2xl animate-in zoom-in-95 duration-200">
+                            <div className="bg-white p-6 rounded-xl w-64 text-center shadow-2xl animate-in zoom-in-95 duration-200 text-center">
                                 <div className="mb-4 flex justify-center text-blue-600"><Icon name="Lock" size={32} /></div>
                                 <h3 className="font-black mb-1 text-slate-900">관리자 인증</h3>
                                 <p className="text-[12px] text-slate-400 mb-4 italic font-medium">비밀번호를 입력하세요.</p>
