@@ -297,7 +297,7 @@
             return (
                 <div className="min-h-screen bg-slate-50 flex flex-col items-center text-center">
                     <nav className="fixed top-0 inset-x-0 h-10 bg-white border-b flex items-center justify-between px-4 z-40 shadow-sm">
-                        <div className="flex items-center gap-1.5 cursor-pointer font-black text-sm" onClick={exitAdminMode}>
+                        <div className="flex items-center gap-1.5 cursor-pointer font-black text-base" onClick={exitAdminMode}>
                             <div className="bg-blue-600 p-0.5 rounded text-white"><Icon name="Car" size={18}/></div> 차량 부제 안내
                         </div>
                         <div className="flex gap-2">
@@ -314,7 +314,7 @@
                             <h2 className="text-xl font-black">{currentView === 'admin' ? '관리자 센터' : '차량 부제 안내'}</h2>
                             <div className="flex items-center bg-white border rounded-lg p-1 scale-90 shadow-sm">
                                 <button onClick={() => setCurrentDate(new Date(getYear, getMonth-1, 1))} className="p-1 hover:bg-slate-50 rounded transition-all"><Icon name="ChevronLeft" size={16}/></button>
-                                <span className="px-3 font-black text-sm">{getYear}년 {getMonth+1}월</span>
+                                <span className="px-3 font-black text-base">{getYear}년 {getMonth+1}월</span>
                                 <button onClick={() => setCurrentDate(new Date(getYear, getMonth+1, 1))} className="p-1 hover:bg-slate-50 rounded transition-all"><Icon name="ChevronRight" size={16}/></button>
                             </div>
                         </div>
@@ -324,13 +324,13 @@
                                 <div className="bg-white rounded-xl shadow-lg border overflow-hidden">
                                     <table className="w-full border-collapse table-fixed text-center">
                                         <thead>
-                                            <tr className="bg-[#002b5b] text-white text-sm font-bold text-center">
+                                            <tr className="bg-[#002b5b] text-white text-base font-bold text-center">
                                                 <th className="py-2.5 w-24 text-center">날짜</th>
                                                 <th className="py-2.5 border-x border-white/20 text-center">본사 주차</th>
                                                 <th className="py-2.5 text-center">롯데마트 주차</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y text-sm font-medium">
+                                        <tbody className="divide-y text-base font-medium">
                                             {scheduleData.map((day, idx) => {
                                                 if (day.type === 'weekend') return null;
                                                 const dStr = `${day.date.getMonth()+1}/${day.date.getDate()}`;
@@ -457,6 +457,7 @@
 </body>
 
 </html>
+
 
 
 
