@@ -298,13 +298,13 @@
                 <div className="min-h-screen bg-slate-50 flex flex-col items-center text-center">
                     <nav className="fixed top-0 inset-x-0 h-10 bg-white border-b flex items-center justify-between px-4 z-40 shadow-sm">
                         <div className="flex items-center gap-1.5 cursor-pointer font-black text-sm" onClick={exitAdminMode}>
-                            <div className="bg-blue-600 p-0.5 rounded text-white"><Icon name="Car" size={14}/></div> 차량 부제 안내
+                            <div className="bg-blue-600 p-0.5 rounded text-white"><Icon name="Car" size={18}/></div> 차량 부제 안내
                         </div>
                         <div className="flex gap-2">
-                            <button onClick={exitAdminMode} className={`px-3 py-1 text-[11px] font-bold rounded ${currentView==='schedule'?'bg-blue-50 text-blue-600':'text-slate-500'}`}>부제 일정</button>
+                            <button onClick={exitAdminMode} className={`px-3 py-1 text-[14px] font-bold rounded ${currentView==='schedule'?'bg-blue-50 text-blue-600':'text-slate-500'}`}>부제 일정</button>
                             {isAdmin ? 
-                                <button onClick={() => setCurrentView('admin')} className={`px-3 py-1 text-[11px] font-bold rounded flex items-center gap-1 ${currentView==='admin'?'bg-indigo-50 text-indigo-600':'text-slate-500'}`}><Icon name="Settings" size={12}/> 관리자</button> :
-                                <button onClick={() => setShowLoginModal(true)} className="px-3 py-1 bg-slate-900 text-white rounded text-[11px] font-bold">관리자</button>
+                                <button onClick={() => setCurrentView('admin')} className={`px-3 py-1 text-[14px] font-bold rounded flex items-center gap-1 ${currentView==='admin'?'bg-indigo-50 text-indigo-600':'text-slate-500'}`}><Icon name="Settings" size={14}/> 관리자</button> :
+                                <button onClick={() => setShowLoginModal(true)} className="px-3 py-1 bg-slate-900 text-white rounded text-[14px] font-bold">관리자</button>
                             }
                         </div>
                     </nav>
@@ -439,10 +439,10 @@
                             <div className="bg-white p-6 rounded-xl w-64 text-center shadow-2xl animate-in zoom-in-95">
                                 <div className="mb-4 flex justify-center text-blue-600"><Icon name="Lock" size={32} /></div>
                                 <h3 className="font-black mb-1">관리자 인증</h3>
-                                <p className="text-[10px] text-slate-400 mb-4 italic">허가된 관리자만 접근 가능합니다.</p>
+                                <p className="text-[12px] text-slate-400 mb-4 italic">허가된 관리자만 접근 가능합니다.</p>
                                 <form onSubmit={handleLogin} className="space-y-3">
                                     <input type="password" placeholder="PIN" value={passwordInput} onChange={e=>setPasswordInput(e.target.value)} className="w-full p-2 bg-slate-100 rounded text-center font-black tracking-widest outline-none border-none focus:ring-2 focus:ring-blue-100 shadow-inner text-center" autoFocus />
-                                    <div className="flex gap-2"><button type="button" onClick={()=>setShowLoginModal(false)} className="flex-1 py-2 bg-slate-100 rounded text-[11px] font-bold hover:bg-slate-200">취소</button><button className="flex-1 py-2 bg-blue-600 text-white rounded text-[11px] font-bold shadow-md hover:bg-blue-700">확인</button></div>
+                                    <div className="flex gap-2"><button type="button" onClick={()=>setShowLoginModal(false)} className="flex-1 py-2 bg-slate-100 rounded text-[12px] font-bold hover:bg-slate-200">취소</button><button className="flex-1 py-2 bg-blue-600 text-white rounded text-[12px] font-bold shadow-md hover:bg-blue-700">확인</button></div>
                                 </form>
                             </div>
                         </div>
@@ -457,3 +457,4 @@
 </body>
 
 </html>
+
