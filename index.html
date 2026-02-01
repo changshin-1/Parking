@@ -375,10 +375,10 @@
                                             </form>
                                         </div>
                                         <div className="bg-white rounded-xl p-4 border shadow-sm">
-                                            <h4 className="text-xs font-black mb-2 text-slate-900 flex items-center gap-1 justify-center"><Icon name="List" size={12}/> 등록된 휴일 목록 ({allHolidaysList.length})</h4>
+                                            <h4 className="text-xs font-black mb-2 text-slate-900 flex items-center gap-1 justify-center"><Icon name="List" size={13}/> 등록된 휴일 목록 ({allHolidaysList.length})</h4>
                                             <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
                                                 {allHolidaysList.map(h => (
-                                                    <div key={h.id} className={`flex items-center justify-between p-2 rounded text-[10px] ${h.isNational ? 'bg-slate-100 text-slate-500' : 'bg-slate-50'}`}>
+                                                    <div key={h.id} className={`flex items-center justify-between p-2 rounded text-[12px] ${h.isNational ? 'bg-slate-100 text-slate-500' : 'bg-slate-50'}`}>
                                                         <span className="font-bold">{h.date.slice(5).replace('-', '/')} {h.label}</span>
                                                         {!h.isNational && <button onClick={()=>deleteHoliday(h.date)} className="text-red-400 hover:text-red-600 p-1 transition-colors"><Icon name="Trash2" size={14}/></button>}
                                                     </div>
@@ -416,7 +416,7 @@
                                             <p className="text-[9px] text-slate-400 mt-2 italic leading-tight text-left">* 줄을 나누어 입력하면 자동으로 불렛 리스트로 표시됩니다.</p>
                                         </div>
                                     ) : (
-                                        <div className="space-y-4 text-[11px] font-medium leading-relaxed text-slate-700 text-left">
+                                        <div className="space-y-4 text-[13px] font-medium leading-relaxed text-slate-700 text-left">
                                             {noticeContent && noticeContent.trim() ? noticeContent.split('\n').map((line, i) => {
                                                 const cleanLine = line.trim().startsWith('-') || line.trim().startsWith('•') ? line.trim().substring(1).trim() : line.trim();
                                                 if (!cleanLine) return null;
@@ -427,7 +427,7 @@
                                         </div>
                                     )}
                                 </div>
-                                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 font-medium text-blue-800 text-[10px] leading-tight text-left">
+                                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 font-medium text-blue-800 text-[12px] leading-tight text-left">
                                     <div className="flex gap-2"><Icon name="Info" size={14} className="shrink-0" /><p>본 일정표는 주말 및 공휴일을 제외하고 번호가 순차적으로 자동 배정됩니다.</p></div>
                                 </div>
                             </div>
@@ -455,4 +455,5 @@
         root.render(<App />);
     </script>
 </body>
+
 </html>
