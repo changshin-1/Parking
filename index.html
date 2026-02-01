@@ -416,7 +416,7 @@
                                             <p className="text-[9px] text-slate-400 mt-2 italic leading-tight text-left">* 줄을 나누어 입력하면 자동으로 불렛 리스트로 표시됩니다.</p>
                                         </div>
                                     ) : (
-                                        <div className="space-y-4 text-[13px] font-medium leading-relaxed text-slate-700 text-left">
+                                        <div className="space-y-4 text-[14px] font-medium leading-relaxed text-slate-700 text-left">
                                             {noticeContent && noticeContent.trim() ? noticeContent.split('\n').map((line, i) => {
                                                 const cleanLine = line.trim().startsWith('-') || line.trim().startsWith('•') ? line.trim().substring(1).trim() : line.trim();
                                                 if (!cleanLine) return null;
@@ -427,7 +427,7 @@
                                         </div>
                                     )}
                                 </div>
-                                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 font-medium text-blue-800 text-[12px] leading-tight text-left">
+                                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 font-medium text-blue-800 text-[13px] leading-tight text-left">
                                     <div className="flex gap-2"><Icon name="Info" size={14} className="shrink-0" /><p>본 일정표는 주말 및 공휴일을 제외하고 번호가 순차적으로 자동 배정됩니다.</p></div>
                                 </div>
                             </div>
@@ -457,4 +457,5 @@
 </body>
 
 </html>
+
 
