@@ -166,6 +166,12 @@
                 return result;
             }, [getYear, getMonth, userHolidays]);
 
+            const allHolidaysList = useMemo(() => {
+                const nat = getYear === 2026 ? Object.entries(NATIONAL_HOLIDAYS_2026).map(([d, l]) => ({ id: `n-${d}`, date: d, label: l, isNational: true })) : [];
+                const usr = userHolidays.map(h => ({ ...h, isNational: false }));
+                return [...nat, ...usr].sort((a, b) => new Date(a.date) - new Date(b.date));
+            }, [getYear, userHolidays]);
+
             const handleLogin = (e) => { e.preventDefault(); if (passwordInput === ADMIN_PASSWORD) { setIsAdmin(true); setShowLoginModal(false); setPasswordInput(''); setCurrentView('admin'); } else alert("틀렸습니다."); };
             const addHoliday = async (e) => { e.preventDefault(); if (!isAdmin || !user || !formDate || !formLabel) return; try { await firebase.firestore().collection('artifacts').doc(appId).collection('public').doc('data').collection('holidays').doc(formDate).set({ date: formDate, label: formLabel }); setFormLabel(''); } catch (e) { alert(e.message); } };
             const deleteHoliday = async (id) => { if (!isAdmin || !user) return; try { await firebase.firestore().collection('artifacts').doc(appId).collection('public').doc('data').collection('holidays').doc(id).delete(); } catch (e) { console.error(e); } };
@@ -187,9 +193,9 @@
                         <div className="flex items-center justify-between mb-2">
                             <h2 className="text-xl font-black">{currentView === 'admin' ? '관리자 센터' : '차량 부제 안내'}</h2>
                             <div className="flex items-center bg-white border rounded-lg p-0.5 scale-90 shadow-sm">
-                                <button onClick={() => setCurrentDate(new Date(getYear, getMonth-1, 1))} className="p-1 hover:bg-slate-50 rounded"><Icon name="ChevronLeft" size={16}/></button>
+                                <button onClick={() => setCurrentDate(new Date(getYear, getMonth-1, 1))} className="p-1 hover:bg-slate-50 rounded transition-all"><Icon name="ChevronLeft" size={16}/></button>
                                 <span className="px-3 font-black text-base">{getYear}년 {getMonth+1}월</span>
-                                <button onClick={() => setCurrentDate(new Date(getYear, getMonth+1, 1))} className="p-1 hover:bg-slate-50 rounded"><Icon name="ChevronRight" size={16}/></button>
+                                <button onClick={() => setCurrentDate(new Date(getYear, getMonth+1, 1))} className="p-1 hover:bg-slate-50 rounded transition-all"><Icon name="ChevronRight" size={16}/></button>
                             </div>
                         </div>
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start text-center">
@@ -198,7 +204,6 @@
                                     <table className="w-full border-collapse table-fixed text-center">
                                         <thead>
                                             <tr className="bg-[#002b5b] text-white text-base font-bold text-center">
-                                                {/* 첫 행 세로 폭 쪼금만 줄임 (py-4 -> py-2.5) */}
                                                 <th className="py-2.5 w-24 text-center">날짜</th>
                                                 <th className="py-2.5 border-x border-white/20 text-center">본사 주차</th>
                                                 <th className="py-2.5 text-center">롯데마트 주차</th>
@@ -208,7 +213,6 @@
                                             {scheduleData.map((day, idx) => (
                                                 day.type === 'weekend' ? null : (
                                                     <tr key={idx} className={isAdmin?'cursor-pointer hover:bg-slate-50 text-center':''}>
-                                                        {/* 데이터 행 높이 더 줄임 (py-0.5 -> py-0) */}
                                                         <td className="py-0 px-2 border-r text-center leading-tight">
                                                             <div className="font-bold text-slate-900 text-sm mt-0.5">{day.date.getMonth()+1}/{day.date.getDate()}</div>
                                                             <div className="text-[11px] text-black font-bold mb-0.5">{['일','월','화','수','목','금','토'][day.date.getDay()]}</div>
@@ -217,7 +221,6 @@
                                                         <React.Fragment>
                                                             <td className="py-0 border-r text-center align-middle">
                                                                 <div className="flex justify-center items-center h-full gap-1 py-1">
-                                                                    {/* 숫자 네모박스에 맞게 간격 조절 */}
                                                                     {day.main.map(n => <span key={n} className="w-6 h-6 flex items-center justify-center bg-white border rounded-md font-black text-sm shadow-sm text-slate-800">{n}</span>)}
                                                                 </div>
                                                             </td>
@@ -233,14 +236,75 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                {/* 관리자 화면 - 휴일 추가 폼 복구됨 */}
+                                {currentView === 'admin' && isAdmin && (
+                                    <div className="mt-6 space-y-6 animate-in slide-in-from-bottom-2 duration-300">
+                                        <div className="bg-slate-900 rounded-xl p-4 text-white shadow-xl">
+                                            <h4 className="text-base font-black mb-3 flex items-center gap-1 justify-center"><Icon name="Plus" size={14}/> 휴일 추가</h4>
+                                            <form onSubmit={addHoliday} className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-1 text-left">
+                                                    <label className="text-[12px] font-bold text-slate-400">날짜</label>
+                                                    <input type="date" value={formDate} onChange={e=>setFormDate(e.target.value)} className="w-full bg-white text-slate-900 p-2 rounded font-bold outline-none border-none shadow-sm text-center" />
+                                                </div>
+                                                <div className="space-y-1 text-left">
+                                                    <label className="text-[12px] font-bold text-slate-400">명칭</label>
+                                                    <input type="text" placeholder="예: 창립기념일" value={formLabel} onChange={e=>setFormLabel(e.target.value)} className="w-full bg-white text-slate-900 p-2 rounded font-bold outline-none border-none shadow-sm text-center" />
+                                                </div>
+                                                <button className="col-span-2 py-2 bg-blue-600 hover:bg-blue-700 rounded font-black text-base transition-colors shadow-md">저장</button>
+                                            </form>
+                                        </div>
+                                        <div className="bg-white rounded-xl p-4 border shadow-sm flex flex-col">
+                                            <h4 className="text-base font-black mb-2 text-slate-900 flex items-center gap-1 justify-center"><Icon name="List" size={15}/> 등록된 휴일 목록 ({allHolidaysList.length})</h4>
+                                            <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar flex-1 text-left">
+                                                {allHolidaysList.map(h => (
+                                                    <div key={h.id} className={`flex items-center justify-between p-2 rounded text-[13px] ${h.isNational ? 'bg-slate-100 text-slate-400' : 'bg-slate-50'}`}>
+                                                        <span className="font-bold">{h.date} {h.label}</span>
+                                                        {!h.isNational && <button onClick={()=>deleteHoliday(h.id)} className="text-red-400 hover:text-red-600 p-1 transition-colors"><Icon name="Trash2" size={14}/></button>}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="lg:col-span-4 space-y-4 text-left">
                                 <div className="bg-white rounded-xl shadow-md border-t-4 border-blue-600 p-5 overflow-hidden">
-                                    <div className="flex items-center justify-between mb-4"><div className="flex items-center gap-2 text-blue-700"><Icon name="Bell" size={18}/><h3 className="font-black text-base">필독 공지사항</h3></div>
-                                    {isAdmin && <div className="flex gap-2 items-center">{!isEditingNotice ? <button onClick={handleEditNotice} className="text-blue-500 p-1 rounded-full"><Icon name="Edit" size={18}/></button> : <div className="flex gap-1 animate-in zoom-in-95"><button onClick={saveNotice} className="text-green-600 p-1"><Icon name="Check" size={18}/></button><button onClick={()=>setIsEditingNotice(false)} className="text-red-500 p-1"><Icon name="X" size={18}/></button></div>}
-                                    {!isDeletingNotice ? <button onClick={()=>setIsDeletingNotice(true)} className="text-slate-300 p-1"><Icon name="Trash2" size={18}/></button> : <div className="flex gap-1 items-center bg-red-50 p-0.5 rounded-lg border border-red-100 animate-in zoom-in-95"><button onClick={confirmDeleteNoticeAll} className="bg-red-600 text-white text-[9px] font-black px-2 py-1 rounded">삭제확인</button><button onClick={()=>setIsDeletingNotice(false)} className="text-slate-400 p-1"><Icon name="X" size={14}/></button></div>}</div>}</div>
-                                    {isEditingNotice ? <div className="animate-in fade-in duration-200"><textarea autoFocus value={tempNoticeText} onChange={e=>setTempNoticeText(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3 rounded text-[13px] font-medium outline-none focus:border-blue-500 h-64 resize-none shadow-inner" /><p className="text-[10px] text-slate-400 mt-2 italic">* 엔터를 쳐서 줄을 나누면 자동으로 리스트로 표시됩니다.</p></div> : 
-                                    <div className="space-y-4 text-[13px] font-medium text-slate-700">{noticeContent ? noticeContent.split('\n').map((line, i) => <div key={i} className="flex gap-2"><span className="text-blue-500 font-black shrink-0">•</span><p>{line.trim().startsWith('-') || line.trim().startsWith('•') ? line.trim().substring(1).trim() : line.trim()}</p></div>) : <div className="text-center py-10 text-slate-400 italic text-[12px]">게시된 공지사항이 없습니다.</div>}</div>}
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-2 text-blue-700">
+                                            <Icon name="Bell" size={18} />
+                                            <h3 className="font-black text-base">필독 공지사항</h3>
+                                        </div>
+                                        {isAdmin && (
+                                            <div className="flex gap-2 items-center">
+                                                {!isEditingNotice ? (
+                                                    <button onClick={handleEditNotice} className="text-blue-500 hover:bg-blue-50 p-1 rounded-full transition-colors" title="공지 전체 수정"><Icon name="Edit" size={18} /></button>
+                                                ) : (
+                                                    <div className="flex gap-1 animate-in zoom-in-95"><button onClick={saveNotice} className="text-green-600 hover:bg-green-50 p-1 rounded-full transition-colors" title="저장"><Icon name="Check" size={18} /></button><button onClick={()=>setIsEditingNotice(false)} className="text-red-500 hover:bg-red-50 p-1 rounded-full transition-colors" title="취소"><Icon name="X" size={18} /></button></div>
+                                                )}
+                                                {!isDeletingNotice ? (
+                                                    <button onClick={() => setIsDeletingNotice(true)} className="text-slate-300 hover:text-red-500 p-1 rounded-full transition-colors" title="공지 전체 삭제"><Icon name="Trash2" size={18} /></button>
+                                                ) : (
+                                                    <div className="flex gap-1 items-center bg-red-50 p-0.5 rounded-lg border border-red-100 animate-in zoom-in-95"><button onClick={confirmDeleteNoticeAll} className="bg-red-600 text-white text-[9px] font-black px-2 py-1 rounded">삭제확인</button><button onClick={()=>setIsDeletingNotice(false)} className="text-slate-400 p-1"><Icon name="X" size={14}/></button></div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                    {isEditingNotice && isAdmin ? (
+                                        <div className="animate-in fade-in duration-200">
+                                            <textarea autoFocus value={tempNoticeText} onChange={e=>setTempNoticeText(e.target.value)} className="w-full bg-slate-50 border border-slate-200 p-3 rounded text-[13px] font-medium outline-none focus:border-blue-500 h-64 resize-none shadow-inner" />
+                                            <p className="text-[10px] text-slate-400 mt-2 italic leading-tight text-left">* 줄을 나누면 자동으로 리스트로 표시됩니다.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4 text-[13px] font-medium leading-relaxed text-slate-700 text-left">
+                                            {noticeContent && noticeContent.trim() ? noticeContent.split('\n').map((line, i) => {
+                                                const cleanLine = line.trim().startsWith('-') || line.trim().startsWith('•') ? line.trim().substring(1).trim() : line.trim();
+                                                if (!cleanLine) return null;
+                                                return (
+                                                    <div key={i} className="flex gap-2 text-left"><span className="text-blue-500 font-black shrink-0">•</span><p>{cleanLine}</p></div>
+                                                );
+                                            }) : <div className="text-center py-10 text-slate-400 italic text-[12px]">게시된 공지사항이 없습니다.</div>}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 font-medium text-blue-800 text-[12px] leading-tight flex gap-2"><Icon name="Info" size={14} className="shrink-0"/><p>본 일정표는 주말 및 공휴일을 제외하고 번호가 순차적으로 자동 배정됩니다.</p></div>
                             </div>
@@ -248,7 +312,7 @@
                     </main>
                     {showLoginModal && (
                         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 text-center"><div className="bg-white p-6 rounded-xl w-64 text-center shadow-2xl animate-in zoom-in-95 duration-200"><div className="mb-4 flex justify-center text-blue-600"><Icon name="Lock" size={32}/></div><h3 className="font-black mb-1 text-slate-900">관리자 인증</h3><p className="text-[12px] text-slate-400 mb-4 italic font-medium">비밀번호를 입력하세요.</p>
-                        <form onSubmit={handleLogin} className="space-y-3"><input type="password" placeholder="PIN" value={passwordInput} onChange={e=>setPasswordInput(e.target.value)} className="w-full p-2.5 bg-slate-100 rounded text-center font-black outline-none text-xl tracking-widest shadow-inner text-center" autoFocus /><div className="flex gap-2"><button type="button" onClick={()=>setShowLoginModal(false)} className="flex-1 py-2 bg-slate-100 rounded text-[12px] font-bold hover:bg-slate-200 transition-colors">취소</button><button className="flex-1 py-2 bg-blue-600 text-white rounded text-[12px] font-bold shadow-md">확인</button></div></form></div></div>
+                        <form onSubmit={handleLogin} className="space-y-3"><input type="password" placeholder="PIN" value={passwordInput} onChange={e=>setPasswordInput(e.target.value)} className="w-full p-2.5 bg-slate-100 rounded text-center font-black outline-none text-xl tracking-widest shadow-inner text-center" autoFocus /><div className="flex gap-2"><button type="button" onClick={()=>setShowLoginModal(false)} className="flex-1 py-2 bg-slate-100 rounded text-[12px] font-bold hover:bg-slate-200 transition-colors">취소</button><button className="flex-1 py-2 bg-blue-600 text-white rounded text-[12px] font-bold shadow-md hover:bg-blue-700 transition-colors">확인</button></div></form></div></div>
                     )}
                 </div>
             );
